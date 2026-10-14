@@ -1,0 +1,60 @@
+@Chameleon.Api_HostAddress = https://127.0.0.1:7117
+
+POST {{Chameleon.Api_HostAddress}}/request/jsonparser?project=AutoTestProject
+Content-Type: application/json
+Accept: application/json
+
+{
+    "FirstName": "Bat",
+    "LastName": "Man",
+    "HikerId": "b1754c14-d296-4b0f-a09a-030017f4461f",
+    "BirthDate": "1990-01-01T00:00:00",
+    "Address": {
+        "Street": "The Big Mansion Street",
+        "City": "Gotham City",
+        "State": "New York",
+        "Zip": 12345
+    },
+    "FavoriteHikeArr": [
+        {
+            "Name": "Dark Cave",
+            "State": "New York"
+        },
+        {
+            "Name": "Penguin Rapids",
+            "State": "Idaho"
+        },
+        {
+            "Name": "Joker Falls",
+            "State": "New Jersey"
+        }
+    ],
+    "FavoriteFloat": 25.5,
+    "FavoriteInt": 8,
+    "FavoriteLong": 987654321,
+    "FavoriteDecimal": 30.33,
+    "FavoriteDouble": 66.66,
+    "FavoriteEmptyArr": [
+    ],
+    "FavoriteColorArr": [
+        "blue",
+        "green",
+        "red"
+    ],
+    "FavoriteNullValue": null,
+    "FavoriteBool": true,
+    "LeastFavoriteBool": false,
+    "FavoriteDateTime": "2026-10-08T12:30:00.123"
+}
+
+###
+
+POST {{Chameleon.Api_HostAddress}}/request/xmlparser?project=AutoTestProject
+Content-Type: application/json
+Accept: application/json
+
+{
+    "projectName": "xmlTestProject"
+}
+
+###
