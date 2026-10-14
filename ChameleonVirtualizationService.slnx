@@ -1,0 +1,16 @@
+<Solution>
+  <Folder Name="/Solution Folder/">
+    <File Path=".dockerignore" />
+    <File Path=".gitattributes" />
+    <File Path=".gitignore" />
+    <File Path="aspire.config.json" />
+    <File Path="README.md" />
+  </Folder>
+  <Project Path="Chameleon.Api/Chameleon.Api.csproj" />
+  <Project Path="Chameleon.AppHost/Chameleon.AppHost.csproj" Id="6a628feb-fe68-49fc-ad64-9d4bc32d5f0e" />
+  <Project Path="Chameleon.CommonApiLib/Chameleon.CommonApiLib.csproj" Id="6214bb39-905b-4271-baf8-ec89df81f535" />
+  <Project Path="Chameleon.CommonLib/Chameleon.CommonLib.csproj" />
+  <Project Path="Chameleon.CosmosData/Chameleon.CosmosData.csproj" Id="6ab21c38-58d1-4565-99f6-29447f410064" />
+  <Project Path="Chameleon.ServiceDefaults/Chameleon.ServiceDefaults.csproj" />
+  <Project Path="UnitTest/UnitTest.csproj" Id="2d5e334c-47d5-4e56-9a5d-75085fa547b3" />
+</Solution>
