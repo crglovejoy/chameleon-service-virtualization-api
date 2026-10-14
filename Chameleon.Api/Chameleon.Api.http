@@ -1,4 +1,4 @@
-@Chameleon.Api_HostAddress = https://127.0.0.1:7117
+@Chameleon.Api_HostAddress = https://localhost:7117
 
 POST {{Chameleon.Api_HostAddress}}/request/jsonparser?project=AutoTestProject
 Content-Type: application/json
@@ -49,12 +49,4 @@ Accept: application/json
 
 ###
 
-POST {{Chameleon.Api_HostAddress}}/request/xmlparser?project=AutoTestProject
-Content-Type: application/json
-Accept: application/json
 
-{
-    "projectName": "xmlTestProject"
-}
-
-###
