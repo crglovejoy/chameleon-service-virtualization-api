@@ -1,12 +1,12 @@
 @Chameleon.Api_HostAddress = https://localhost:7117
 
-POST {{Chameleon.Api_HostAddress}}/request/jsonparser?project=AutoTestProject
+POST {{Chameleon.Api_HostAddress}}/request/jsonparser?project=AutoTestProjectJson
 Content-Type: application/json
 Accept: application/json
 
 {
-    "FirstName": "Bat",
-    "LastName": "Man",
+    "FirstName": "CrazyBat",
+    "LastName": "CrazyMan",
     "HikerId": "b1754c14-d296-4b0f-a09a-030017f4461f",
     "BirthDate": "1990-01-01T00:00:00",
     "Address": {
@@ -48,5 +48,33 @@ Accept: application/json
 }
 
 ###
+
+POST {{Chameleon.Api_HostAddress}}/request/xmlparser?project=AutoTestProjectXml
+Content-Type: application/xml
+Accept: application/xml
+
+<?xml version="1.0" encoding="UTF-8"?>
+ <bookstore>
+     <book category="fiction">
+         <title lang="en">The Great Gatsby Unedited</title>
+         <author>F. Scott Fitzgerald</author>
+         <year>1925</year>
+         <price>14.99</price>
+     </book>
+     <book category="programming">
+         <title lang="en">Learning XML</title>
+         <author>Erik T. Ray</author>
+         <year>2003</year>
+         <price>639.95</price>
+     </book>
+     <book category="self improvement">
+         <title lang="en">Mastering the Flop</title>
+         <author>Luis Suarez Jr.</author>
+         <year>2030</year>
+         <price>400.00</price>
+     </book>
+ </bookstore>
+
+ 
 
 

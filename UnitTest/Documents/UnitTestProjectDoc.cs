@@ -1,12 +1,12 @@
 ﻿using Chameleon.CommonLib;
 
-namespace UnitTest
+namespace UnitTest.Documents
 {
     public class UnitTestProjectDoc
     {
         // Validate RespDoc property values.
         [Test]
-        public void TestProjectDocPropertyValues()
+        public void TestProjectDocConstructor()
         {
      
             ProjectDoc projDoc = GetProjectDoc();
@@ -23,9 +23,26 @@ namespace UnitTest
         }
 
 
+        [Test]
+        public void TestProjectDocAddProjectName()
+        {
+
+            ProjectDoc projDoc = GetProjectDoc();
+            projDoc.AddProjectName("project3");
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(projDoc.projectNames.Length, Is.EqualTo(3));
+                Assert.That(projDoc.projectNames[0], Is.EqualTo(_proj1));
+                Assert.That(projDoc.projectNames[1], Is.EqualTo(_proj2));
+                Assert.That(projDoc.projectNames[2], Is.EqualTo("project3"));
+            });
+        }
+
+
         // Validate ProjectDoc Id property value.
         [Test]
-        public void TestProjectDocIdPropertyValue()
+        public void TestProjectDocIdSpecifiedValue()
         {
 
             ProjectDoc projDoc = GetProjectDoc(true);

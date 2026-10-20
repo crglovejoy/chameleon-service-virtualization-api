@@ -15,6 +15,7 @@
   <Project Path="Chameleon.CommonApiLib/Chameleon.CommonApiLib.csproj" Id="6214bb39-905b-4271-baf8-ec89df81f535" />
   <Project Path="Chameleon.CommonLib/Chameleon.CommonLib.csproj" />
   <Project Path="Chameleon.CosmosData/Chameleon.CosmosData.csproj" Id="6ab21c38-58d1-4565-99f6-29447f410064" />
+  <Project Path="Chameleon.Parsers/Chameleon.Parsers.csproj" Id="1c7360ee-b0a7-417c-88c8-577caff5fae8" />
   <Project Path="Chameleon.ServiceDefaults/Chameleon.ServiceDefaults.csproj" />
   <Project Path="UnitTest/UnitTest.csproj" Id="2d5e334c-47d5-4e56-9a5d-75085fa547b3" />
 </Solution>

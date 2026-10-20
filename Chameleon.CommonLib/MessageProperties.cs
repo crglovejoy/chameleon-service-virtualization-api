@@ -4,11 +4,20 @@ using System.Text;
 
 namespace Chameleon.CommonLib
 {
+    /**************************/
+    /**  MESSAGE PROPERTIES  **/
+    /**************************/
+
     public class MessageProperties
     {
         public readonly string originalMessageStr;
         public readonly Dictionary<string, object> messageDict;
         public readonly string schemaSignatureHash;
+
+
+        /*****************/
+        /*  Constructor  */
+        /*****************/
 
         public MessageProperties(string originalMessageStr, Dictionary<string, object> valuesMessageDict, Dictionary<string, object> signatureMessageDict)
         {

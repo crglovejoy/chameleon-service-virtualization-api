@@ -1,24 +1,34 @@
 ﻿
 namespace Chameleon.CommonLib
 {
-    // ProjectDoc class represents a document that contains information about projects used in the dataset.
+    /*******************/
+    /**  PROJECT DOC  **/
+    /*******************/
 
     public class ProjectDoc : DocumentBase
     {
-        public string[] projectNames;
+        private string[] _projectNames;
+        public string[] projectNames => _projectNames;
+
+
+        /*****************/
+        /*  Constructor  */
+        /*****************/
 
         public ProjectDoc(string[] projectNames, string id = "") : base(CommonProjectName, DocumentTypeEnum.ProjectDoc, id)
         {
-            this.projectNames = projectNames;
+            _projectNames = projectNames;
         }
+
+
+        /********************/
+        /*  AddProjectName  */
+        /********************/
 
         public void AddProjectName(string newProjName)
         {
             if (string.IsNullOrWhiteSpace(newProjName) || projectNames.Contains<string>(newProjName)) return;
-
-            List<string> projectList = [.. projectNames];
-            projectList.AddRange(newProjName);
-            projectNames = [.. projectList];
+            _projectNames = ArrayHelpers.AddObjectToArray<string>(newProjName, _projectNames);
         }
     }
 }

@@ -2,59 +2,112 @@
 using Chameleon.CommonLib;
 using Newtonsoft.Json;
 using System.Diagnostics;
+using Chameleon.Parsers;
 
-namespace UnitTest
+namespace UnitTest.Documents
 {
     public class UnitTestRoutingDoc
     {
-        private const string _matchingDocId = "matching_doc_id";
-        private const string _notMatchingDocId = "no_match_doc_id";
+        //private static readonly Boolean _debug = (false || CommonTestVals.Debug);
         private const string _projectName = "RoutingDocUnitTest";
-        private const string _id = "abcd";
+        private RoutingDocHelper _rteDocHelper;
 
+
+        [SetUp]
+        public void SetUp()
+        {
+            _rteDocHelper = new RoutingDocHelper();
+        }
+
+        /******************/
+        /*  Test Methods  */
+        /******************/
 
         // Test that when there is a matching route, we get the expected reponse doc Id
         [Test]
         public void TestHikerRoutingDocumentRouteMatch()
         {
-            JsonParser jsonParser = new();
-            MessageProperties mProps = jsonParser.ProcessMessageIntoClassSpecificMessageProperties<TestHiker>(JsonConvert.SerializeObject(new TestHiker()));
-            RoutingDoc routingDoc = GetRoutingDoc(mProps);
-            string respDocId = routingDoc.GetResponseDocumentId(mProps.messageDict);
+            RoutingDoc routingDoc = _rteDocHelper.GetRoutingDoc(achieveMatch:true, useWildcard:false, useIdVal:false, _projectName);
+            Route? route = routingDoc.GetMatchingRoute(_rteDocHelper.MsgProps.messageDict);
 
             // Route 3 should match
-            Assert.That(respDocId, Is.EqualTo(_matchingDocId));
+            Assert.Multiple(() =>
+            {
+                Assert.That(route, Is.Not.Null);
+                Assert.That(route?.matchFilters?.Length ?? -1, Is.EqualTo(5));
+                Assert.That(route?.matchFilters[0]?.propertyName ?? string.Empty, Is.EqualTo("FirstName"));
+                Assert.That(route?.matchFilters[0]?.propertyValue ?? string.Empty, Is.EqualTo("Bat"));
+            });
+
+            Assert.That(route.responseDocumentId, Is.EqualTo(RoutingDocHelper.RouteMatchingRespDocId));
         }
 
-        
+
+        // Test that when there is a matching route when using a wildcard, we get the expected reponse doc Id
+        [Test]
+        public void TestHikerRoutingDocumentRouteWildcardMatch()
+        {
+            RoutingDoc routingDoc = _rteDocHelper.GetRoutingDoc(achieveMatch:true, useWildcard:true, useIdVal:false, _projectName);
+            Route? route = routingDoc.GetMatchingRoute(_rteDocHelper.MsgProps.messageDict);
+
+            // We should have gotten a Route 3 wildcard route match...
+            Assert.Multiple(() =>
+            {
+                Assert.That(route, Is.Not.Null);
+                Assert.That(route?.matchFilters?.Length ?? -1, Is.EqualTo(1));
+                Assert.That(route?.matchFilters[0]?.propertyName ?? string.Empty, Is.EqualTo("*"));
+                Assert.That(route?.matchFilters[0]?.propertyValue ?? string.Empty, Is.EqualTo("*"));
+            });
+
+            Assert.That(route.responseDocumentId, Is.EqualTo(RoutingDocHelper.RouteMatchingRespDocId));
+        }
+
+
         // Test that when there is no matching route, we get the no schema match response doc Id
         [Test]
         public void TestHikerRoutingDocumentRouteNoMatch()
         {
-            JsonParser jsonParser = new();
-            MessageProperties mProps = jsonParser.ProcessMessageIntoClassSpecificMessageProperties<TestHiker>(JsonConvert.SerializeObject(new TestHiker()));
-            RoutingDoc routingDoc = GetRoutingDoc(mProps, false);
-            string respDocId = routingDoc.GetResponseDocumentId(mProps.messageDict);
+            RoutingDoc routingDoc = _rteDocHelper.GetRoutingDoc(achieveMatch:false, useWildcard:false, useIdVal:false, _projectName);
+            Route? route = routingDoc.GetMatchingRoute(_rteDocHelper.MsgProps.messageDict);
 
-            // No routes should match
-            Assert.That(respDocId, Is.EqualTo(_notMatchingDocId));
+            // We should not have found a routing match.
+            Assert.That(route, Is.Null);
+            Assert.That(routingDoc.noRouteMatchResponseDocumentId, Is.EqualTo(RoutingDocHelper.RouteNotMatchingRespDocId));
         }
 
         // Validate other RoutingDoc property values that we didn't check above.
         [Test]
-        public void TestRoutingDocumentPropertyValues()
+        public void TestRoutingDocumentOtherPropertyValues()
         {
-            JsonParser jsonParser = new();
-            MessageProperties mProps = jsonParser.ProcessMessageIntoClassSpecificMessageProperties<TestHiker>(JsonConvert.SerializeObject(new TestHiker()));
-            RoutingDoc routingDoc = GetRoutingDoc(mProps, false);
+            RoutingDoc routingDoc = _rteDocHelper.GetRoutingDoc(achieveMatch: false, useWildcard: false, useIdVal: false, _projectName);
 
             Assert.Multiple(() =>
             {
                 Assert.That(routingDoc.id.StartsWith(typeof(RoutingDoc).Name));
-                Assert.That(routingDoc.originalMessageStr, Is.EqualTo(mProps.originalMessageStr));
+                Assert.That(routingDoc.originalMessageStr, Is.EqualTo(_rteDocHelper.MsgProps.originalMessageStr));
                 Assert.That(string.IsNullOrWhiteSpace(routingDoc.schemaSignature), Is.False);
                 Assert.That(routingDoc.project, Is.EqualTo(_projectName));
                 Assert.That(routingDoc.documentType, Is.EqualTo(DocumentTypeEnum.RoutingDoc));
+            });
+        }
+
+
+        [Test]
+        public void TestAddRoute()
+        {
+            RoutingDoc routingDoc = _rteDocHelper.GetRoutingDoc(achieveMatch: false, useWildcard: false, useIdVal: false, _projectName);
+            routingDoc.AddRoute(new Route([new MatchFilter("goofy", "dog")], ["property_goofy"], RoutingDocHelper.RouteMatchingRespDocId));
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(routingDoc.routes.Length, Is.EqualTo(4));
+                Assert.That(routingDoc.routes[0].matchFilters[0].propertyName, Is.EqualTo("FirstName"));
+                Assert.That(routingDoc.routes[0].matchFilters[0].propertyValue, Is.EqualTo("Bat"));
+                Assert.That(routingDoc.routes[3].matchFilters[0].propertyName, Is.EqualTo("goofy"));
+                Assert.That(routingDoc.routes[3].matchFilters[0].propertyValue, Is.EqualTo("dog"));
+                Assert.That(routingDoc.routes[3].propertyVariableNames.Length, Is.EqualTo(1));
+                Assert.That(routingDoc.routes[3].propertyVariableNames[0], Is.EqualTo("property_goofy"));
+                Assert.That(routingDoc.routes[3].responseDocumentId, Is.EqualTo(RoutingDocHelper.RouteMatchingRespDocId));
             });
         }
 
@@ -63,82 +116,10 @@ namespace UnitTest
         [Test]
         public void TestRoutingDocumentIdPropertyValue()
         {
-            JsonParser jsonParser = new();
-            MessageProperties mProps = jsonParser.ProcessMessageIntoClassSpecificMessageProperties<TestHiker>(JsonConvert.SerializeObject(new TestHiker()));
-            RoutingDoc routingDoc = GetRoutingDoc(mProps, false, true);
-            Assert.That(routingDoc.id, Is.EqualTo(_id));
+            RoutingDoc routingDoc = _rteDocHelper.GetRoutingDoc(achieveMatch:false, useWildcard:false, useIdVal:true, _projectName);
+            Assert.That(routingDoc.id, Is.EqualTo(RoutingDocHelper.Id));
         }
 
-
-        private static RoutingDoc GetRoutingDoc(MessageProperties mProps, Boolean achieveMatch = true, Boolean useIdVal = false)
-        {
-            // Do these checks to elimiante the warnings that we may be using null values later in this method.
-            Assert.Multiple(() =>
-            {
-                Assert.That(mProps.messageDict.ContainsKey("FirstName"), Is.True);
-                Assert.That(mProps.messageDict.GetValueOrDefault("FirstName"), Is.Not.EqualTo(null));
-                Assert.That(mProps.messageDict.ContainsKey("LastName"), Is.True);
-                Assert.That(mProps.messageDict.GetValueOrDefault("LastName"), Is.Not.EqualTo(null));
-                Assert.That(mProps.messageDict.ContainsKey("FavoriteFloat"), Is.True);
-                Assert.That(mProps.messageDict.GetValueOrDefault("FavoriteFloat"), Is.Not.EqualTo(null));
-                Assert.That(mProps.messageDict.ContainsKey("FavoriteColorArr[1]"), Is.True);
-                Assert.That(mProps.messageDict.GetValueOrDefault("FavoriteColorArr[1]"), Is.Not.EqualTo(null));
-                Assert.That(mProps.messageDict.ContainsKey("FavoriteInt"), Is.True);
-                Assert.That(mProps.messageDict.GetValueOrDefault("FavoriteInt"), Is.Not.EqualTo(null));
-            });
-
-            // altering the route 1 value for 'FavoriteFloat' so route1 is not a match.
-            Route route1 = new(
-                [ new RoutingItem("FirstName", mProps.messageDict.GetValueOrDefault("FirstName")),
-                  new RoutingItem("LastName", mProps.messageDict.GetValueOrDefault("LastName")),
-                  new RoutingItem("FavoriteFloat", 3.0f),
-                  new RoutingItem("FavoriteColorArr[1]", mProps.messageDict.GetValueOrDefault("FavoriteColorArr[1]")),
-                  new RoutingItem("FavoriteInt", mProps.messageDict.GetValueOrDefault("FavoriteInt"))
-                ],
-                "route1_should_not_match"
-            );
-
-            // altering the route 2 value for 'FavoriteColorArr[1]' so route2 is not a match.
-            Route route2 = new(
-                [ new RoutingItem("FirstName", mProps.messageDict.GetValueOrDefault("FirstName")),
-                  new RoutingItem("LastName", mProps.messageDict.GetValueOrDefault("LastName")),
-                  new RoutingItem("FavoriteFloat", mProps.messageDict.GetValueOrDefault("FavoriteFloat")),
-                  new RoutingItem("FavoriteColorArr[1]", "X" + mProps.messageDict.GetValueOrDefault("FavoriteColorArr[1]")),
-                  new RoutingItem("FavoriteInt", mProps.messageDict.GetValueOrDefault("FavoriteInt"))
-                ],
-                "route2_should_not_match"
-            );
-            
-
-            /* route 3 is always the matching route UNLESS achieveMatch parameter is passed to us with false, then we're
-             * going to make certain route3 is not a match as well by altering the value for 'FavoriteInt'.
-             */
-            object favIntObj = mProps.messageDict.GetValueOrDefault("FavoriteInt");
-            if (!achieveMatch)
-            {
-                favIntObj = 666;
-            }
-            Route route3 = new(
-                [ new RoutingItem("FirstName", mProps.messageDict.GetValueOrDefault("FirstName")),
-                  new RoutingItem("LastName", mProps.messageDict.GetValueOrDefault("LastName")),
-                  new RoutingItem("FavoriteFloat", mProps.messageDict.GetValueOrDefault("FavoriteFloat")),
-                  new RoutingItem("FavoriteColorArr[1]", mProps.messageDict.GetValueOrDefault("FavoriteColorArr[1]")),
-                  new RoutingItem("FavoriteInt", favIntObj)
-                ],
-                _matchingDocId
-            );
-
-            // return the new RoutingDoc
-
-            if (useIdVal)
-            {
-                // Use a specific document id.
-                return new RoutingDoc(_projectName, mProps.schemaSignatureHash, [route1, route2, route3], _notMatchingDocId, mProps.originalMessageStr, _id);
-            }
-
-            // Let the RoutingDoc constructor create a document id.
-            return new RoutingDoc(_projectName, mProps.schemaSignatureHash, [route1, route2, route3], _notMatchingDocId, mProps.originalMessageStr);
-        }
 
         [Test]
         public void RoutingSpeedTest()
@@ -152,28 +133,37 @@ namespace UnitTest
             string jsonStr = JsonConvert.SerializeObject(hiker);
             MessageProperties msgProps = jsonParser.ProcessMessageIntoMessageProperties(jsonStr);
 
-            RoutingItem[] routingItems = [
-                new RoutingItem("FirstName", "Bat"),
-                new RoutingItem("LastName", "Man"),
-                new RoutingItem("BirthDate", DateTime.Parse("01/01/1990")),
-                new RoutingItem("FavoriteHikeArr[0].Name", "Dark Cave"),
-                new RoutingItem("FavoriteHikeArr[0].State", "New York"),
-                new RoutingItem("FavoriteLong", 987654321L)
+            MatchFilter[] matchFilters = [
+                new MatchFilter("FirstName", "Bat"),
+                new MatchFilter("LastName", "Man"),
+                new MatchFilter("BirthDate", DateTime.Parse("01/01/1990")),
+                new MatchFilter("FavoriteHikeArr[0].Name", "Dark Cave"),
+                new MatchFilter("FavoriteHikeArr[0].State", "New York"),
+                new MatchFilter("FavoriteLong", 987654321L)
                 ];
 
-            Route route = new(routingItems, matchRespDocId);
-            RoutingDoc routingDoc = new("RoutingSpeedTest", "1234Signature", [route], noMatchRespDocId, jsonStr);
+            Route newRoute = new(matchFilters, RoutingDocHelper.ReplacePropertyNames, matchRespDocId);
+            RoutingDoc routingDoc = new("RoutingSpeedTest", "1234Signature", [newRoute], noMatchRespDocId, jsonStr);
             string respId = string.Empty;
 
             for (int i = 0; i < numIters; i++)
             {
                 stopW.Start();
-                respId = routingDoc.GetResponseDocumentId(msgProps.messageDict);
+                Route? route = routingDoc.GetMatchingRoute(msgProps.messageDict);
+                if (route == null)
+                {
+                    throw new ArgumentException("Unexpected that the route would be null");
+                }
+                respId = route.responseDocumentId;
                 stopW.Stop();
             }
 
-            Assert.That(respId, Is.EqualTo(matchRespDocId));
-            Assert.That(stopW.ElapsedMilliseconds, Is.EqualTo(0L));
+            Assert.Multiple(() =>
+            {
+                Assert.That(respId, Is.EqualTo(matchRespDocId));
+                Assert.That(stopW.ElapsedMilliseconds, Is.EqualTo(0L));
+            });
+
             decimal elapsedUs = stopW.Elapsed.Microseconds;
             decimal avgRoutingTimeUs = (decimal)elapsedUs / (decimal)numIters;
 
@@ -185,8 +175,7 @@ namespace UnitTest
             /* RESULTS CAN VARY DEPENDING ON MACHINE AND OTHER LOAD
              * Last test output on a windows PC...
              * Total time taken to route 25 messages: 367 us
-             * Average time taken to route a single message: 14.68 us
-             */
+             * Average time taken to route a single message: 14.68 us */
         }
     }
 }

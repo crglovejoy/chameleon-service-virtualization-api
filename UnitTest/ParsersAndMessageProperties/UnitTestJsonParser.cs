@@ -3,8 +3,9 @@ using Chameleon.CommonLib;
 using Newtonsoft.Json;
 using NUnit.Framework.Internal;
 using System.Diagnostics;
+using Chameleon.Parsers;
 
-namespace UnitTest
+namespace UnitTest.ParsersAndMessageProperties
 {
     public class UnitTestJsonParser
     {
@@ -15,8 +16,7 @@ namespace UnitTest
         { }
 
         /* The next 3 methods validate that parsing a Json string into a specific class or not providing a
-         * specific class results in the same MessageProperties values.
-         */
+         * specific class results in the same MessageProperties values. */
 
         // Providing a specific class (Hiker) to the parser.
         [Test]
@@ -170,7 +170,7 @@ namespace UnitTest
                 Assert.That(msgDict.ContainsKey("FavoriteNullValue"), Is.False);
 
                 // Signature
-                Assert.That(mProps.schemaSignatureHash, Is.EqualTo(CommonTestVals.HikerExpectedSignatureHash));
+                Assert.That(mProps.schemaSignatureHash, Is.EqualTo(TestHiker.GetSchemaHashString()));
 
                 // Original Message String
                 Assert.That(mProps.originalMessageStr, Is.EqualTo(jsonStr));

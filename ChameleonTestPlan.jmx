@@ -32,7 +32,7 @@
         </collectionProp>
       </Arguments>
       <hashTree/>
-      <ThreadGroup guiclass="ThreadGroupGui" testclass="ThreadGroup" testname="ChameleonTest ThreadGroup" enabled="true">
+      <ThreadGroup guiclass="ThreadGroupGui" testclass="ThreadGroup" testname="ChameleonTest ThreadGroup">
         <intProp name="ThreadGroup.num_threads">1</intProp>
         <intProp name="ThreadGroup.ramp_time">1</intProp>
         <longProp name="ThreadGroup.duration">60</longProp>
@@ -44,7 +44,7 @@
         </elementProp>
       </ThreadGroup>
       <hashTree>
-        <CSVDataSet guiclass="TestBeanGUI" testclass="CSVDataSet" testname="CSV Data Set Config">
+        <CSVDataSet guiclass="TestBeanGUI" testclass="CSVDataSet" testname="CSV Data Set Config" enabled="true">
           <stringProp name="delimiter">,</stringProp>
           <stringProp name="fileEncoding"></stringProp>
           <stringProp name="filename">${currentDir}/ChameleonJmxFirstNameLastName.csv</stringProp>
@@ -79,7 +79,7 @@
           </collectionProp>
         </HeaderManager>
         <hashTree/>
-        <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="ChameleonApiRequest" enabled="true">
+        <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="ChameleonApiRequest">
           <stringProp name="HTTPSampler.path">request/jsonparser?project=AutoTestProject</stringProp>
           <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
           <stringProp name="HTTPSampler.method">POST</stringProp>
@@ -90,7 +90,7 @@
               <elementProp name="" elementType="HTTPArgument">
                 <boolProp name="HTTPArgument.always_encode">false</boolProp>
                 <stringProp name="Argument.value">{&#xd;
-    &quot;FirstName&quot;: &quot;${firstname}&quot;,&#xd;
+    &quot;FirstName&quot;: &quot;${firstname}x&quot;,&#xd;
     &quot;LastName&quot;: &quot;${lastname}&quot;,&#xd;
     &quot;HikerId&quot;: &quot;b1754c14-d296-4b0f-a09a-030017f4461f&quot;,&#xd;
     &quot;BirthDate&quot;: &quot;1990-01-01T00:00:00&quot;,&#xd;
@@ -137,14 +137,16 @@
           </elementProp>
         </HTTPSamplerProxy>
         <hashTree>
-          <ResponseAssertion guiclass="AssertionGui" testclass="ResponseAssertion" testname="Response Assertion" enabled="true">
+          <ResponseAssertion guiclass="AssertionGui" testclass="ResponseAssertion" testname="Response Assertion">
             <collectionProp name="Asserion.test_strings">
-              <stringProp name="-420837097">MatchingRouteFoundResponse</stringProp>
+              <stringProp name="-1762399641">\\&quot;${firstname}\\&quot;</stringProp>
+              <stringProp name="1545677855">\\&quot;${lastname}\\&quot;</stringProp>
             </collectionProp>
-            <stringProp name="Assertion.custom_message"></stringProp>
+            <stringProp name="Assertion.custom_message">Did not find ${firstname} and/or ${lastname} in the response.</stringProp>
             <stringProp name="Assertion.test_field">Assertion.response_data</stringProp>
             <boolProp name="Assertion.assume_success">false</boolProp>
-            <intProp name="Assertion.test_type">2</intProp>
+            <intProp name="Assertion.test_type">16</intProp>
+            <stringProp name="Scope.variable">firstname</stringProp>
           </ResponseAssertion>
           <hashTree/>
         </hashTree>
