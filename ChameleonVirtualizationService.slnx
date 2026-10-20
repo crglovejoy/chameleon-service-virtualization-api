@@ -1,5 +1,6 @@
 <Solution>
   <Folder Name="/Performance Test/">
+    <File Path="ChameleonJmxBooks.csv" />
     <File Path="ChameleonJmxFirstNameLastName.csv" />
     <File Path="ChameleonTestPlan.jmx" />
   </Folder>
