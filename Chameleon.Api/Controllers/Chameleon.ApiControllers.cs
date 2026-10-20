@@ -20,7 +20,6 @@ public class RequestController : ControllerBase
     public async Task<IActionResult> JsonParser([FromQuery] string project)
     {
         var reqResult = await _processRequestActionLogic.ProcessRequestMessageAsync(ParserType.JSON, HttpContext.Request.Body, project);
-        reqResult.HandleResponseHeaders(Response.Headers);
         return ResponseHelpers.BuildFromResult(this, reqResult, _logger);
     }
 
@@ -28,7 +27,6 @@ public class RequestController : ControllerBase
     public async Task<IActionResult> XmlParser([FromQuery] string project)
     {
         var reqResult = await _processRequestActionLogic.ProcessRequestMessageAsync(ParserType.XML, HttpContext.Request.Body, project);
-        reqResult.HandleResponseHeaders(Response.Headers);
         return ResponseHelpers.BuildFromResult(this, reqResult, _logger);
     }
 }
@@ -38,21 +36,27 @@ public static class ResponseHelpers
 {
     public static IActionResult BuildFromResult(ControllerBase controller, RequestResult reqResult, ILogger logger)
     {
-        if (reqResult.Success)
-        {
-            return controller.Ok(reqResult.ResponseStr);
-        }
+        reqResult.HandleResponseHeaders(controller.Response.Headers);
 
-        if (reqResult.ServerErr || (reqResult.LoggingError?.Length ?? 0) > 0)
+        switch(reqResult.ResultStatus)
         {
-            foreach (string err in reqResult.LoggingError ?? [])
-            {
+            case ReturnResultStatus.Result200:
+                return controller.Ok(reqResult.ResponseStr);
+
+            case ReturnResultStatus.Result400:
+                return controller.BadRequest(reqResult.ResponseStr);
+
+            case ReturnResultStatus.Result500:
+                if (!string.IsNullOrWhiteSpace(reqResult.LoggingError))
+                {
+                    logger.LogError(reqResult.LoggingError);
+                }
+                return controller.StatusCode(500, reqResult.ResponseStr);
+
+            default:
+                string err = $"{reqResult.ResultStatus} is not a supported ReturnResultStatus value";
                 logger.LogError(err);
-            }
-
-            return controller.StatusCode(500, reqResult.ResponseStr);
+                return controller.StatusCode(500, err);
         }
-
-        return controller.BadRequest(reqResult.ResponseStr);
     }
 }

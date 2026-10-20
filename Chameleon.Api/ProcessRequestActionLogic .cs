@@ -1,27 +1,35 @@
 ﻿using Chameleon.CommonApiLib;
 using Chameleon.CommonLib;
+using Chameleon.Parsers;
 
 namespace Chameleon.Api
 {
+    /************************************/
+    /**  PROCESS REQUEST ACTION LOGIC  **/
+    /************************************/
+
     public class ProcessRequestActionLogic(IDataAccess dataAccess, JsonParser jsonParser, XmlParser xmlParser) : IProcessRequestActionLogic
     {
         private readonly IDataAccess _dataAccess = dataAccess;
         private readonly JsonParser _jsonParser = jsonParser;
         private readonly XmlParser _xmlParser = xmlParser;
+        private static HeaderItem[] ContentPlainTextHeader => [new HeaderItem("Content-Type", "text/plain")];
+
+      
+        /********************************/
+        /*  ProcessRequestMessageAsync  */
+        /********************************/
 
         public async Task<RequestResult> ProcessRequestMessageAsync(ParserType parserType, Stream messageStream, string project)
         {
-            string messageStr = await GetStringFromStreamAsync(messageStream);
-            return await ProcessRequestMessageAsync(parserType, messageStr, project);
-        }
+            RequestResult reqResult = new();
+            string messageStr = await StringHelpers.GetStringFromStreamAsync(messageStream);
 
-
-        public async Task<RequestResult> ProcessRequestMessageAsync(ParserType parserType, string messageStr, string project)
-        {
             try
             {
                 MessageProperties? mProps;
                 
+                // Call the appropriate parser to acquire the request message MessageProperties.
                 switch (parserType)
                 {
                     case ParserType.JSON:
@@ -31,57 +39,96 @@ namespace Chameleon.Api
                         mProps = _xmlParser.ProcessMessageIntoMessageProperties(messageStr);
                         break;
                     default:
-                        return new RequestResult(false, true, $"{parserType} is not supported by the controller action.", []);
+                        reqResult.SetAsServerErr($"{parserType} is not supported by the controller action.", ContentPlainTextHeader);
+                        return reqResult;
                 }
 
+                // Look for a routing document that matches the schema signature of the request message.
                 List<RoutingDoc> routingDocList = await _dataAccess.GetDataBySchemaSignature<RoutingDoc>(mProps.schemaSignatureHash, project);
 
                 if (routingDocList == null || routingDocList.Count == 0)
                 {
-                    return await GetNoSchemaMatchRequestResult(project);
+                    // We did not achieve a schema match, so get the no schema match response document for the project and return a response.
+                    return await GetNoSchemaMatchRequestResult(project, reqResult);
                 }
 
-                return await GetSchemaMatchRequestResult(routingDocList[0], mProps, project);
+                // We have a schema match, now look for a route match response to return.
+                return await GetSchemaMatchRequestResult(routingDocList[0], mProps.messageDict, project, reqResult);
             }
             catch(Exception ex)
             {
-                return new RequestResult(false, true, $"Processing error: {ex.Message}", ContentPlainTextHeader, ex);
+                reqResult.SetAsServerErr(ex, ContentPlainTextHeader);
+                return reqResult;
             }
         }
 
-        public async Task<RequestResult> GetNoSchemaMatchRequestResult(string project)
+
+        /***********************************/
+        /*  GetNoSchemaMatchRequestResult  */
+        /***********************************/
+        
+        private async Task<RequestResult> GetNoSchemaMatchRequestResult(string project, RequestResult reqResult)
         {
             List<NoSchemaMatchRespDoc> nsmList = await _dataAccess.GetDataByTypeAsync<NoSchemaMatchRespDoc>(DocumentTypeEnum.NoSchemaMatchRespDoc, project);
 
             if (nsmList == null || nsmList.Count == 0)
             {
-                return new RequestResult(false, false, $"Found no schema match and could not find a NoSchemaMatchResponse to provide for project {project}", ContentPlainTextHeader);
+                reqResult.SetAsBadRequest($"Found no schema match and could not find a NoSchemaMatchResponse to provide for project {project}", 
+                    ContentPlainTextHeader);
+                return reqResult;
             }
 
-            return new RequestResult(true, false, nsmList[0].responseContent, nsmList[0].headerItems);
+            reqResult.SetAsSuccess(nsmList[0].responseContent, nsmList[0].headerItems);
+            return reqResult;
         }
 
-        public async Task<RequestResult> GetSchemaMatchRequestResult(RoutingDoc routingDoc, MessageProperties mProps, string project)
+
+        /*********************************/
+        /*  GetSchemaMatchRequestResult  */
+        /*********************************/
+
+        private async Task<RequestResult> GetSchemaMatchRequestResult(RoutingDoc routingDoc, Dictionary<string, object> reqMsgDict, string project,
+            RequestResult reqResult)
         {
-            string respId = routingDoc.GetResponseDocumentId(mProps.messageDict);
-            List<RespDoc> respDocList = await _dataAccess.GetDataByIdAsync<RespDoc>(respId, project);
+            CommonLib.Route? matchRoute = routingDoc.GetMatchingRoute(reqMsgDict);
+
+            string respDocId;
+            
+            if (matchRoute != null)
+            {
+                // This is the matching route, so use the route response document id to retrieve the RespDoc from the database.
+                respDocId = matchRoute.responseDocumentId;
+            }
+            else
+            {
+                // We did not get a route match, so use the no route match response doc id to retrieve the RespDoc from the database.
+                respDocId = routingDoc.noRouteMatchResponseDocumentId;
+            }
+
+            // Retrieve the RespDoc (using respDocId) from the database.
+            var respDocList = await _dataAccess.GetDataByIdAsync<RespDoc>(respDocId, project);
 
             if (respDocList == null || respDocList.Count == 0)
             {
-                return new RequestResult(false, true, $"Found a schema match but failed to find a response document with id {respId}", ContentPlainTextHeader);
+                reqResult.SetAsServerErr($"Found a schema match but failed to find a response document with id {respDocId}", ContentPlainTextHeader);
+                return reqResult;
             }
 
-            return new RequestResult(true, false, respDocList[0].responseContent, respDocList[0].headerItems);
-        }
-
-        private static async Task<string> GetStringFromStreamAsync(Stream stream)
-        {
-            using (var reader = new StreamReader(stream))
+            // Acquire the response message string to use in the response.
+            string respContent;
+            if (matchRoute != null)
             {
-                return await reader.ReadToEndAsync();
+                // This the route match response, so do any variable string replacements in the response string before we return it.
+                respContent = RespDoc.GetVariablesResolvedResponse(respDocList[0].responseContent, reqMsgDict, matchRoute.propertyVariableNames);
             }
-        }
+            else
+            {
+                // This is the no route match response - no variable replacement work to do here.
+                respContent = respDocList[0].responseContent;
+            }
 
-        private static HeaderItem[] ContentPlainTextHeader => [new HeaderItem("Content-Type", "text/plain")]; 
+            reqResult.SetAsSuccess(respContent, respDocList[0].headerItems);
+            return reqResult;
+        }
     }
 }

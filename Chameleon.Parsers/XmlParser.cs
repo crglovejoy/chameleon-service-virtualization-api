@@ -1,9 +1,10 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Chameleon.CommonLib;
+using Chameleon.CommonApiLib;
 using System.Xml;
 
-namespace Chameleon.CommonApiLib
+namespace Chameleon.Parsers
 {
     public class XmlParser : MessageParserBase
     {

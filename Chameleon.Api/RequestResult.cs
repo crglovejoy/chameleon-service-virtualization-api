@@ -1,33 +1,109 @@
 ﻿using Chameleon.CommonLib;
-using System.Net;
+using Microsoft.AspNetCore.WebUtilities;
 
 namespace Chameleon.Api
 {
+    public enum ReturnResultStatus { None, Result200, Result400, Result500 };
+
+
+    /**********************/
+    /**  REQUEST RESULT  **/
+    /**********************/
+
     public class RequestResult
     {
-        public readonly Boolean Success = false;
-        public readonly Boolean ServerErr = false;
-        public readonly string ResponseStr;
-        private readonly HeaderItem[] _headerItems;
-        public readonly string[] LoggingError;
+        private Boolean _success;
+        public Boolean Success => _success;
+        private Boolean _serverErr;
+        public Boolean ServerErr => _serverErr;
+        private string _responseStr;
+        public string ResponseStr => _responseStr;
+        private HeaderItem[] _headerItems;
+        public HeaderItem[] HeaderItems => _headerItems;
+        private string _loggingError;
+        public string LoggingError => _loggingError;
+        private ReturnResultStatus _resultStatus;
+        public ReturnResultStatus ResultStatus => _resultStatus;
 
-        public RequestResult(Boolean success, Boolean serverError, string responseStr, HeaderItem[] headerItems, Exception? ex = null)
+
+        /*****************/
+        /*  Constructor  */
+        /*****************/
+
+        public RequestResult()
         {
-            Success = success;
-            ServerErr = serverError;
-            ResponseStr = responseStr;
-            _headerItems = headerItems;
+            _success = false;
+            _serverErr = false;
+            _responseStr = string.Empty;
+            _headerItems = [];
+            _loggingError = string.Empty;
+            _resultStatus = ReturnResultStatus.None;
+        }
 
-            if (ex != null)
+
+        /********************/
+        /*  SetAsServerErr  */
+        /********************/
+
+        public void SetAsServerErr(string responseStr, HeaderItem[] headerItems, string loggingErr = "")
+        {
+            _serverErr = true;
+            _responseStr = responseStr;
+
+            if (string.IsNullOrWhiteSpace(loggingErr))
             {
-                LoggingError = [$"{ex}"];
+                _loggingError = responseStr;
             }
             else
             {
-                LoggingError = [];
+                _loggingError = loggingErr;
             }
+
+            _headerItems = headerItems;
+            _resultStatus = ReturnResultStatus.Result500;
         }
 
+
+        /*************************************/
+        /*  SetAsServerErr - with Exception  */
+        /*************************************/
+
+        public void SetAsServerErr(Exception ex, HeaderItem[] headerItems)
+        {
+            /* Want the logged error to contain the exception message + stacktrace.
+             * Want the response string to contain JUST the exception message */
+            SetAsServerErr(ex.Message, headerItems, $"{ex}");
+        }
+
+
+        /******************/
+        /*  SetAsSuccess  */
+        /******************/
+
+        public void SetAsSuccess(string responseStr, HeaderItem[] headerItems)
+        {
+            _success = true;
+            _responseStr = responseStr;
+            _headerItems = headerItems;
+            _resultStatus = ReturnResultStatus.Result200;
+        }
+
+
+        /*********************/
+        /*  SetAsBadRequest  */
+        /*********************/
+
+        public void SetAsBadRequest(string responseStr, HeaderItem[] headerItems)
+        {
+            _responseStr = responseStr;
+            _headerItems = headerItems;
+            _resultStatus = ReturnResultStatus.Result400;
+        }
+
+
+        /*******************************/
+        /*  Handle our custom headers  */
+        /*******************************/
 
         // Replace/add response headers and values as specified in the response document.
         public void HandleResponseHeaders(IHeaderDictionary headerDict)

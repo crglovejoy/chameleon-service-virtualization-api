@@ -5,12 +5,13 @@ using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.Azure.Cosmos;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using Chameleon.Parsers;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.AddServiceDefaults();
 
-builder.Services.AddProblemDetails(opts => // built-in problem details support
+builder.Services.AddProblemDetails(opts =>
     opts.CustomizeProblemDetails = (ctx) =>
     {
         if (!ctx.ProblemDetails.Extensions.ContainsKey("traceId"))
@@ -42,9 +43,20 @@ builder.Services.AddSingleton<IDataAccess>(sp =>
 builder.Services.AddSingleton<JsonParser>();
 builder.Services.AddSingleton<XmlParser>();
 builder.Services.AddSingleton<IProcessRequestActionLogic, ProcessRequestActionLogic>();
-builder.Services.AddControllers();
+builder.Services.AddControllers().AddXmlSerializerFormatters();
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSingleton<CosmosDataSeeder>();
+builder.Services.AddSingleton<DatabaseDataSeeder>(sp =>
+{
+    var dataAccess = sp.GetRequiredService<IDataAccess>();
+    var jsonParser = (MessageParserBase)sp.GetRequiredService<JsonParser>();
+    var xmlParser = (MessageParserBase)sp.GetRequiredService<XmlParser>();
+    return new DatabaseDataSeeder(
+        dataAccess: dataAccess,
+        jsonParser: jsonParser,
+        xmlParser: xmlParser
+    );     
+});
+ 
 
 // Build app
 var app = builder.Build();
@@ -65,8 +77,8 @@ static async Task SetupSeedDataAsync(WebApplication app)
     using (var scope = app.Services.CreateScope())
     {
         var services = scope.ServiceProvider;
-        var dataSeeder = services.GetRequiredService<CosmosDataSeeder>();
-        await dataSeeder.CreateAsync();
+        var dataSeeder = services.GetRequiredService<DatabaseDataSeeder>();
+        await dataSeeder.CreateTestDataAsync();
     }
 }
 

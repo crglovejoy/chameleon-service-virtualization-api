@@ -1,8 +1,10 @@
-﻿using Chameleon.CommonLib;
-using Chameleon.CommonApiLib;
+﻿using Chameleon.CommonApiLib;
+using Chameleon.CommonLib;
+using Chameleon.Parsers;
+using System.Diagnostics;
 
 
-namespace UnitTest
+namespace UnitTest.ParsersAndMessageProperties
 {
     internal class UnitTestXmlParser
     {
@@ -17,7 +19,7 @@ namespace UnitTest
         public void TestXmlRequestMessageProperties()
         {
             XmlParser xmlParser = new XmlParser();
-            MessageProperties mProps = xmlParser.ProcessMessageIntoMessageProperties(CommonTestVals.MessageXmlString);
+            MessageProperties mProps = xmlParser.ProcessMessageIntoMessageProperties(TestXmlBooks.XmlRequestMessage);
 
             if (_debug)
             {
@@ -28,38 +30,47 @@ namespace UnitTest
             {
                 Assert.That(mProps.messageDict.ContainsKey("?xml.@version"), Is.True);
                 Assert.That(mProps.messageDict.GetValueOrDefault("?xml.@version"), Is.EqualTo("1.0"));
-                Assert.That(mProps.messageDict.ContainsKey("customers.customer.@id"), Is.True);
-                Assert.That(mProps.messageDict.GetValueOrDefault("customers.customer.@id"), Is.EqualTo("55000"));
-                Assert.That(mProps.messageDict.ContainsKey("customers.customer.name"), Is.True);
-                Assert.That(mProps.messageDict.GetValueOrDefault("customers.customer.name"), Is.EqualTo("Charter Group"));
-                Assert.That(mProps.messageDict.ContainsKey("customers.customer.address[0].street"), Is.True);
-                Assert.That(mProps.messageDict.GetValueOrDefault("customers.customer.address[0].street"), Is.EqualTo("100 Main"));
-                Assert.That(mProps.messageDict.ContainsKey("customers.customer.address[0].city"), Is.True);
-                Assert.That(mProps.messageDict.GetValueOrDefault("customers.customer.address[0].city"), Is.EqualTo("Framingham"));
-                Assert.That(mProps.messageDict.ContainsKey("customers.customer.address[0].state"), Is.True);
-                Assert.That(mProps.messageDict.GetValueOrDefault("customers.customer.address[0].state"), Is.EqualTo("MA"));
-                Assert.That(mProps.messageDict.ContainsKey("customers.customer.address[1].street"), Is.True);
-                Assert.That(mProps.messageDict.GetValueOrDefault("customers.customer.address[1].street"), Is.EqualTo("720 Prospect"));
-                Assert.That(mProps.messageDict.ContainsKey("customers.customer.address[1].city"), Is.True);
-                Assert.That(mProps.messageDict.GetValueOrDefault("customers.customer.address[1].city"), Is.EqualTo("Framingham"));
-                Assert.That(mProps.messageDict.ContainsKey("customers.customer.address[1].state"), Is.True);
-                Assert.That(mProps.messageDict.GetValueOrDefault("customers.customer.address[1].state"), Is.EqualTo("MA"));
-                Assert.That(mProps.messageDict.ContainsKey("customers.customer.address[2].street"), Is.True);
-                Assert.That(mProps.messageDict.GetValueOrDefault("customers.customer.address[2].street"), Is.EqualTo("120 Ridge"));
-                Assert.That(mProps.messageDict.ContainsKey("customers.customer.address[2].state"), Is.True);
-                Assert.That(mProps.messageDict.GetValueOrDefault("customers.customer.address[2].state"), Is.EqualTo("MA"));
-                Assert.That(mProps.messageDict.ContainsKey("customers.customer.address[2].zip"), Is.True);
-                Assert.That(mProps.messageDict.GetValueOrDefault("customers.customer.address[2].zip"), Is.EqualTo("01760"));
-                Assert.That(mProps.messageDict.ContainsKey("customers.customer.wealth.bank"), Is.True);
-                Assert.That(mProps.messageDict.GetValueOrDefault("customers.customer.wealth.bank"), Is.EqualTo("100.25"));
-                Assert.That(mProps.messageDict.ContainsKey("customers.customer.wealth.stock"), Is.True);
-                Assert.That(mProps.messageDict.GetValueOrDefault("customers.customer.wealth.stock"), Is.EqualTo(".25"));
-                Assert.That(mProps.messageDict.ContainsKey("customers.customer.wealth.car"), Is.True);
-                Assert.That(mProps.messageDict.GetValueOrDefault("customers.customer.wealth.car"), Is.EqualTo("0.0"));
-                Assert.That(mProps.messageDict.ContainsKey("customers.customer.wealth.realestate"), Is.True);
-                Assert.That(mProps.messageDict.GetValueOrDefault("customers.customer.wealth.realestate"), Is.EqualTo("0.10"));
-                Assert.That(mProps.schemaSignatureHash, Is.EqualTo(CommonTestVals.XmlStringExpectedSignatureHash));
-                Assert.That(mProps.originalMessageStr, Is.EqualTo(StringHelpers.CleanToSingleLineString(CommonTestVals.MessageXmlString)));
+                Assert.That(mProps.messageDict.ContainsKey("?xml.@encoding"), Is.True);
+                Assert.That(mProps.messageDict.GetValueOrDefault("?xml.@encoding"), Is.EqualTo("UTF-8"));
+                Assert.That(mProps.messageDict.ContainsKey("bookstore.book[0].@category"), Is.True);
+                Assert.That(mProps.messageDict.GetValueOrDefault("bookstore.book[0].@category"), Is.EqualTo("fiction"));
+                Assert.That(mProps.messageDict.ContainsKey("bookstore.book[0].title.@lang"), Is.True);
+                Assert.That(mProps.messageDict.GetValueOrDefault("bookstore.book[0].title.@lang"), Is.EqualTo("en"));
+                Assert.That(mProps.messageDict.ContainsKey("bookstore.book[0].title.#text"), Is.True);
+                Assert.That(mProps.messageDict.GetValueOrDefault("bookstore.book[0].title.#text"), Is.EqualTo("The Great Gatsby"));
+                Assert.That(mProps.messageDict.ContainsKey("bookstore.book[0].author"), Is.True);
+                Assert.That(mProps.messageDict.GetValueOrDefault("bookstore.book[0].author"), Is.EqualTo("F. Scott Fitzgerald"));
+                Assert.That(mProps.messageDict.ContainsKey("bookstore.book[0].year"), Is.True);
+                Assert.That(mProps.messageDict.GetValueOrDefault("bookstore.book[0].year"), Is.EqualTo("1925"));
+                Assert.That(mProps.messageDict.ContainsKey("bookstore.book[0].price"), Is.True);
+                Assert.That(mProps.messageDict.GetValueOrDefault("bookstore.book[0].price"), Is.EqualTo("14.99"));
+                Assert.That(mProps.messageDict.ContainsKey("bookstore.book[1].@category"), Is.True);
+                Assert.That(mProps.messageDict.GetValueOrDefault("bookstore.book[1].@category"), Is.EqualTo("programming"));
+                Assert.That(mProps.messageDict.ContainsKey("bookstore.book[1].title.@lang"), Is.True);
+                Assert.That(mProps.messageDict.GetValueOrDefault("bookstore.book[1].title.@lang"), Is.EqualTo("en"));
+                Assert.That(mProps.messageDict.ContainsKey("bookstore.book[1].title.#text"), Is.True);
+                Assert.That(mProps.messageDict.GetValueOrDefault("bookstore.book[1].title.#text"), Is.EqualTo("Learning XML"));
+                Assert.That(mProps.messageDict.ContainsKey("bookstore.book[1].author"), Is.True);
+                Assert.That(mProps.messageDict.GetValueOrDefault("bookstore.book[1].author"), Is.EqualTo("Erik T. Ray"));
+                Assert.That(mProps.messageDict.ContainsKey("bookstore.book[1].year"), Is.True);
+                Assert.That(mProps.messageDict.GetValueOrDefault("bookstore.book[1].year"), Is.EqualTo("2003"));
+                Assert.That(mProps.messageDict.ContainsKey("bookstore.book[1].price"), Is.True);
+                Assert.That(mProps.messageDict.GetValueOrDefault("bookstore.book[1].price"), Is.EqualTo("39.95"));
+                Assert.That(mProps.messageDict.ContainsKey("bookstore.book[2].@category"), Is.True);
+                Assert.That(mProps.messageDict.GetValueOrDefault("bookstore.book[2].@category"), Is.EqualTo("self improvement"));
+                Assert.That(mProps.messageDict.ContainsKey("bookstore.book[2].title.@lang"), Is.True);
+                Assert.That(mProps.messageDict.GetValueOrDefault("bookstore.book[2].title.@lang"), Is.EqualTo("en"));
+                Assert.That(mProps.messageDict.ContainsKey("bookstore.book[2].title.#text"), Is.True);
+                Assert.That(mProps.messageDict.GetValueOrDefault("bookstore.book[2].title.#text"), Is.EqualTo("Mastering the Flop"));
+                Assert.That(mProps.messageDict.ContainsKey("bookstore.book[2].author"), Is.True);
+                Assert.That(mProps.messageDict.GetValueOrDefault("bookstore.book[2].author"), Is.EqualTo("Luis Suarez"));
+                Assert.That(mProps.messageDict.ContainsKey("bookstore.book[2].year"), Is.True);
+                Assert.That(mProps.messageDict.GetValueOrDefault("bookstore.book[2].year"), Is.EqualTo("2030"));
+                Assert.That(mProps.messageDict.ContainsKey("bookstore.book[2].price"), Is.True);
+                Assert.That(mProps.messageDict.GetValueOrDefault("bookstore.book[2].price"), Is.EqualTo("400.00"));
+
+                Assert.That(mProps.schemaSignatureHash, Is.EqualTo(TestXmlBooks.SchemaHashString));
+                Assert.That(mProps.originalMessageStr, Is.EqualTo(StringHelpers.CleanToSingleLineString(TestXmlBooks.XmlRequestMessage)));
             });
         }
 
@@ -72,7 +83,7 @@ namespace UnitTest
 
             try
             {
-                MessageProperties mProps = xmlParser.ProcessMessageIntoClassSpecificMessageProperties<string>(CommonTestVals.MessageXmlString);
+                MessageProperties mProps = xmlParser.ProcessMessageIntoClassSpecificMessageProperties<string>(TestXmlBooks.XmlRequestMessage);
             }
             catch (NotImplementedException niex)
             {
@@ -90,7 +101,7 @@ namespace UnitTest
         [Test]
         public void TestXmlParserWithEmptyMessageGetsArgException()
         {
-            XmlParser xmlParser = new XmlParser();
+            XmlParser xmlParser = new();
             Boolean gotArgExceptType = false;
 
             try
@@ -108,6 +119,37 @@ namespace UnitTest
             }
 
             Assert.That(gotArgExceptType, Is.True);
+        }
+
+        [Test]
+        public void XmlParserSpeedTest()
+        {
+            int numIters = 100;
+            Stopwatch stopW = new Stopwatch();
+            XmlParser xmlParser = new();
+            MessageProperties msgProp = null!;
+            string xmlStr = TestXmlBooks.XmlRequestMessage;
+
+            for (int i = 0; i < numIters; i++)
+            {
+                stopW.Start();
+                msgProp = xmlParser.ProcessMessageIntoMessageProperties(xmlStr);
+                stopW.Stop();
+            }
+
+            Assert.That(msgProp, Is.Not.Null);
+            decimal avgParserTimeMs = (decimal)stopW.ElapsedMilliseconds / (decimal)numIters;
+
+            TestContext.Out.WriteLine($"Total time taken to process {numIters} messages: {stopW.ElapsedMilliseconds} ms");
+            TestContext.Out.WriteLine($"Average time taken to process a single message: {avgParserTimeMs} ms");
+
+            Assert.That(avgParserTimeMs, Is.LessThan(.5m));
+
+            /* RESULTS CAN VARY DEPENDING ON MACHINE AND OTHER LOAD
+             * Last test output on a windows PC...
+             * Total time taken to process 100 messages: 7 ms
+             * Average time taken to process a single message: 0.07 ms
+             */
         }
     }
 }

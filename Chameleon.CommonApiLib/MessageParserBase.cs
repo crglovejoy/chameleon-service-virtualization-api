@@ -5,10 +5,18 @@ namespace Chameleon.CommonApiLib
 {
     public enum ParserType { JSON, XML }
 
+    /*************************/
+    /**  MESSAGEPARSERBASE  **/
+    /*************************/
     public abstract class MessageParserBase
     {
         public abstract MessageProperties ProcessMessageIntoMessageProperties(string message);
         public abstract MessageProperties ProcessMessageIntoClassSpecificMessageProperties<T>(string message);
+
+
+        /**************************/
+        /*  GetMessageProperties  */
+        /**************************/
 
         protected static MessageProperties GetMessageProperties(JToken jToken, string originalMessage)
         {
@@ -23,16 +31,27 @@ namespace Chameleon.CommonApiLib
         }
 
 
-        // Convert our JToken to a flattened dictionary.
-        protected static void FlattenJToken(JToken token, string prefix, Dictionary<string, object> resultValsDict, Dictionary<string, object> resultValsStrippedDict)
+        /**************************************************/
+        /*  Convert a JToken to 2 flattened dictionaries  */
+        /**************************************************/
+
+        protected static void FlattenJToken(JToken token, string prefix, Dictionary<string, object> resultValsDict, 
+            Dictionary<string, object> resultValsStrippedDict)
         {
-            /* resultValsStrippedDict will be built with key/value pairs found in the request - with values set to default values and
-             * used for calculating the schema signature hash value for the corresponding RoutingDoc creation or lookup in the database.
-             * 
-             * resultValsDict will be built with key/value pairs found in the request - with values set to the request provided values and
-             * used for making comparisons against the RoutingDoc assigned Route filters for determining a response to send back.  Value type
-             * conversions are also done here to align the supported JToken and Cosmos database supported data types.
-             */
+            /* FlattenJToken populates two dictionaries concurrently: */
+             
+            /* 1) resultValsStrippedDict will be built with property name/value pairs found in the request - with null properties avoided and
+             * remaining property values set to default values.  This dictionary is used for calculating the schema signature hash value - this 
+             * will be stored in a RoutingDoc and requests having the same schema will always land on the same RoutingDoc.  (Same schema = after 
+             * properties having null values are removed and remaining property values set to default values, the signature hash value is the same).
+             *  
+             * 2) resultValsDict will be built with property name/value pairs found in the request - with null properites avoided and remaining
+             * property values set to the request provided values.  This dictionary is used for comparing request message property values against
+             * matching rules for determining which response document content to use in generating a response to a request
+             *
+             * Value type conversions are also done in this method to bridge the supported JToken data types and Cosmos database supported data
+             * types so when we retrieve our matching filters/rules from Cosmos later to do comparisons against the resultValsDict values, we're 
+             * working with the same data type (Example: Cosmos stores all numbers as 64-bit - int needs to be comvered to long.) */
 
             if (token is JObject obj)
             {
@@ -70,7 +89,7 @@ namespace Chameleon.CommonApiLib
                         resultValsStrippedDict[prefix] = 0D;
                         break;
                     case JTokenType.String:
-                        resultValsDict[prefix] = DetermineValueToAssignString(value);  // Call this method to solve null reference warnings by the IDE
+                        resultValsDict[prefix] = DetermineStringValueToAssign(value);  // Call this method to solve null reference warnings by the IDE
                         resultValsStrippedDict[prefix] = string.Empty;
                         break;
                     case JTokenType.Date:   // Cosmos doesn't support the date datatype, but testing shows a DateTime will be converted to a string by default...
@@ -88,7 +107,7 @@ namespace Chameleon.CommonApiLib
         }
 
 
-        private static string DetermineValueToAssignString(JValue value)
+        private static string DetermineStringValueToAssign(JValue value)
         {
             string? strValue = value.Value<string>();
             if (strValue == null)
