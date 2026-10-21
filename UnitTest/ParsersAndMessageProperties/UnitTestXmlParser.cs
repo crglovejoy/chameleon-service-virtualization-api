@@ -122,7 +122,7 @@ namespace UnitTest.ParsersAndMessageProperties
         }
 
         [Test]
-        public void XmlParserSpeedTest()
+        public void TestXmlParserSpeed()
         {
             int numIters = 100;
             Stopwatch stopW = new Stopwatch();

@@ -3,16 +3,9 @@ using Chameleon.CommonLib;
 
 namespace UnitTest.Api
 {
-    public class DataAccessMock : IDataAccess
+    public class DataAccessMock(int scenario) : IDataAccess
     {
-        private int _scenario;
-        private int _step;
-
-        public DataAccessMock(int scenario)
-        {
-            _scenario = scenario;
-            _step = 1;
-        }
+        private int _scenario = scenario;
 
         public async Task UpdateData<T>(T document) where T : DocumentBase
         {

@@ -13,7 +13,6 @@ namespace Chameleon.Api
         private readonly IDataAccess _dataAccess = dataAccess;
         private readonly JsonParser _jsonParser = jsonParser;
         private readonly XmlParser _xmlParser = xmlParser;
-        private static HeaderItem[] ContentPlainTextHeader => [new HeaderItem("Content-Type", "text/plain")];
 
       
         /********************************/
@@ -39,7 +38,7 @@ namespace Chameleon.Api
                         mProps = _xmlParser.ProcessMessageIntoMessageProperties(messageStr);
                         break;
                     default:
-                        reqResult.SetAsServerErr($"{parserType} is not supported by the controller action.", ContentPlainTextHeader);
+                        reqResult.SetAsServerErr($"{parserType} is not supported by the controller action.", RequestResult.ContentPlainTextHeader);
                         return reqResult;
                 }
 
@@ -48,7 +47,8 @@ namespace Chameleon.Api
 
                 if (routingDocList == null || routingDocList.Count == 0)
                 {
-                    // We did not achieve a schema match, so get the no schema match response document for the project and return a response.
+                     /* We did not achieve a schema match, so get the no schema match response document for the project
+                     * and return a response. */
                     return await GetNoSchemaMatchRequestResult(project, reqResult);
                 }
 
@@ -57,7 +57,7 @@ namespace Chameleon.Api
             }
             catch(Exception ex)
             {
-                reqResult.SetAsServerErr(ex, ContentPlainTextHeader);
+                reqResult.SetAsServerErr(ex, RequestResult.ContentPlainTextHeader);
                 return reqResult;
             }
         }
@@ -73,11 +73,13 @@ namespace Chameleon.Api
 
             if (nsmList == null || nsmList.Count == 0)
             {
-                reqResult.SetAsBadRequest($"Found no schema match and could not find a NoSchemaMatchResponse to provide for project {project}", 
-                    ContentPlainTextHeader);
+                // UNIT TEST SCENARIO #1
+                reqResult.SetAsNotFound($"Found no schema match and could not find a NoSchemaMatchResponse to provide for project {project}", 
+                    RequestResult.ContentPlainTextHeader);
                 return reqResult;
             }
 
+            // UNIT TEST SCENARIO #2
             reqResult.SetAsSuccess(nsmList[0].responseContent, nsmList[0].headerItems);
             return reqResult;
         }
@@ -96,12 +98,14 @@ namespace Chameleon.Api
             
             if (matchRoute != null)
             {
-                // This is the matching route, so use the route response document id to retrieve the RespDoc from the database.
+                /* UNIT TEST SCENARIO #3
+                 * This is the matching route, so use the route response document id to retrieve the RespDoc from the database. */
                 respDocId = matchRoute.responseDocumentId;
             }
             else
             {
-                // We did not get a route match, so use the no route match response doc id to retrieve the RespDoc from the database.
+                /* UNIT TEST SCENARIO #4
+                 * We did not get a route match, so use the no route match response doc id to retrieve the RespDoc from the database. */
                 respDocId = routingDoc.noRouteMatchResponseDocumentId;
             }
 
@@ -110,7 +114,8 @@ namespace Chameleon.Api
 
             if (respDocList == null || respDocList.Count == 0)
             {
-                reqResult.SetAsServerErr($"Found a schema match but failed to find a response document with id {respDocId}", ContentPlainTextHeader);
+                // UNIT TEST SCENARIO #5
+                reqResult.SetAsServerErr($"Found a schema match but failed to find a response document with id {respDocId}", RequestResult.ContentPlainTextHeader);
                 return reqResult;
             }
 
@@ -118,12 +123,14 @@ namespace Chameleon.Api
             string respContent;
             if (matchRoute != null)
             {
-                // This the route match response, so do any variable string replacements in the response string before we return it.
+                /* UNIT TEST SCENARIOS #3 & #6
+                 * This the route match response, so do any variable string replacements in the response string before we return it. */
                 respContent = RespDoc.GetVariablesResolvedResponse(respDocList[0].responseContent, reqMsgDict, matchRoute.propertyVariableNames);
             }
             else
             {
-                // This is the no route match response - no variable replacement work to do here.
+                /* UNIT TEST SCENARIO #5
+                 * This is the no route match response - no variable replacement work to do here. */
                 respContent = respDocList[0].responseContent;
             }
 

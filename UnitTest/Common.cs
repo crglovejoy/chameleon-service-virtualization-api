@@ -8,7 +8,7 @@ namespace UnitTest
 {
     internal static class CommonTestVals
     {
-        internal const Boolean Debug = true;
+        internal const Boolean Debug = false;
     }
 
     public static class OutputHelpers
@@ -35,7 +35,7 @@ namespace UnitTest
         public const string RouteMatchingRespDocId = "matching_doc_id";
         public const string RouteNotMatchingRespDocId = "no_match_doc_id";
         public readonly static string[] ReplacePropertyNames = ["FirstName", "LastName"];
-        private MessageProperties _msgProps;
+        private MessageProperties _msgProps = null!;
         public MessageProperties MsgProps => _msgProps;
         public const string Id = "abcd";
 
@@ -50,6 +50,11 @@ namespace UnitTest
             TestHiker hiker = new();
             string jsonStr = JsonConvert.SerializeObject(hiker);
             _msgProps = jsonParser.ProcessMessageIntoMessageProperties(jsonStr);
+
+            if (_msgProps == null)
+            {
+                throw new Exception($"MsgProps was null!");
+            }
 
             // Do these checks to elimiante the warnings that we may be using null values later in this method.
             Assert.Multiple(() =>

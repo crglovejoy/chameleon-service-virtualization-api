@@ -122,7 +122,7 @@ namespace UnitTest.Documents
 
 
         [Test]
-        public void RoutingSpeedTest()
+        public void TestRoutingSpeed()
         {
             int numIters = 25;
             string matchRespDocId = "MatchRespId";

@@ -204,7 +204,7 @@ namespace UnitTest.ParsersAndMessageProperties
 
 
         [Test]
-        public void JsonParserSpeedTest()
+        public void TestJsonParserSpeed()
         {
             int numIters = 100;
             Stopwatch stopW = new Stopwatch();
@@ -236,7 +236,7 @@ namespace UnitTest.ParsersAndMessageProperties
         }
 
         [Test]
-        public void JsonParserSpecificClassSpeedTest()
+        public void TestJsonParserSpecificClassSpeed()
         {
             int numIters = 100;
             Stopwatch stopW = new Stopwatch();
