@@ -3,6 +3,7 @@ using Chameleon.CommonApiLib;
 using Chameleon.CommonLib;
 using Chameleon.Parsers;
 using Newtonsoft.Json;
+using System.Net;
 using System.Text;
 using UnitTest;
 
@@ -40,7 +41,7 @@ namespace UnitTest.Api
             RequestResult reqResult = await procActLogic.ProcessRequestMessageAsync(ParserType.JSON, _hikerStream, _project);
             Assert.Multiple(() =>
             {
-                Assert.That(reqResult.ResultStatus, Is.EqualTo(ReturnResultStatus.Result400));
+                Assert.That(reqResult.ResultStatus, Is.EqualTo(HttpStatusCode.NotFound));
                 Assert.That(reqResult.ResponseStr, Is.EqualTo($"Found no schema match and could not find a NoSchemaMatchResponse to provide for project {_project}"));
                 Assert.That(reqResult.HeaderItems.Length, Is.EqualTo(1));
                 Assert.That(reqResult.HeaderItems[0].propertyName, Is.EqualTo("Content-Type"));
@@ -60,7 +61,7 @@ namespace UnitTest.Api
             RequestResult reqResult = await procActLogic.ProcessRequestMessageAsync(ParserType.JSON, _hikerStream, _project);
             Assert.Multiple(() =>
             {
-                Assert.That(reqResult.ResultStatus, Is.EqualTo(ReturnResultStatus.Result200));
+                Assert.That(reqResult.ResultStatus, Is.EqualTo(HttpStatusCode.OK));
                 Assert.That(reqResult.ResponseStr, Is.EqualTo(ApiTestCommon.NoSchemaMatchRespStr));
                 Assert.That(reqResult.HeaderItems.Length, Is.EqualTo(1));
                 Assert.That(reqResult.HeaderItems[0].propertyName, Is.EqualTo(ApiTestCommon.JsonHeaderItems[0].propertyName));
@@ -80,7 +81,7 @@ namespace UnitTest.Api
             RequestResult reqResult = await procActLogic.ProcessRequestMessageAsync(ParserType.JSON, _hikerStream, _project);
             Assert.Multiple(() =>
             {
-                Assert.That(reqResult.ResultStatus, Is.EqualTo(ReturnResultStatus.Result200));
+                Assert.That(reqResult.ResultStatus, Is.EqualTo(HttpStatusCode.OK));
                 Assert.That(reqResult.ResponseStr, Is.EqualTo(RespDocHelper.RespDocMatchRespString));
                 Assert.That(reqResult.HeaderItems.Length, Is.EqualTo(1));
                 Assert.That(reqResult.HeaderItems[0].propertyName, Is.EqualTo(RespDocHelper.JsonHeaderItems[0].propertyName));
@@ -102,7 +103,7 @@ namespace UnitTest.Api
             RequestResult reqResult = await procActLogic.ProcessRequestMessageAsync(ParserType.JSON, _hikerStream, _project);
             Assert.Multiple(() =>
             {
-                Assert.That(reqResult.ResultStatus, Is.EqualTo(ReturnResultStatus.Result200));
+                Assert.That(reqResult.ResultStatus, Is.EqualTo(HttpStatusCode.OK));
                 Assert.That(reqResult.ResponseStr, Is.EqualTo(RespDocHelper.RespDocNoMatchRespString));
                 Assert.That(reqResult.HeaderItems.Length, Is.EqualTo(1));
                 Assert.That(reqResult.HeaderItems[0].propertyName, Is.EqualTo(RespDocHelper.JsonHeaderItems[0].propertyName));
@@ -123,7 +124,7 @@ namespace UnitTest.Api
             RequestResult reqResult = await procActLogic.ProcessRequestMessageAsync(ParserType.JSON, _hikerStream, _project);
             Assert.Multiple(() =>
             {
-                Assert.That(reqResult.ResultStatus, Is.EqualTo(ReturnResultStatus.Result500));
+                Assert.That(reqResult.ResultStatus, Is.EqualTo(HttpStatusCode.InternalServerError));
                 Assert.That(reqResult.ResponseStr, Is.EqualTo($"Found a schema match but failed to find a response document with id {RoutingDocHelper.RouteMatchingRespDocId}"));
                 Assert.That(reqResult.HeaderItems.Length, Is.EqualTo(1));
                 Assert.That(reqResult.HeaderItems[0].propertyName, Is.EqualTo("Content-Type"));
@@ -150,7 +151,7 @@ namespace UnitTest.Api
 
             Assert.Multiple(() =>
             {
-                Assert.That(reqResult.ResultStatus, Is.EqualTo(ReturnResultStatus.Result200));
+                Assert.That(reqResult.ResultStatus, Is.EqualTo(HttpStatusCode.OK));
                 Assert.That(reqResult.ResponseStr, Is.EqualTo(RespDocHelper.ExpectedRespDocMatchRespStrWithVars));
                 Assert.That(reqResult.HeaderItems.Length, Is.EqualTo(1));
                 Assert.That(reqResult.HeaderItems[0].propertyName, Is.EqualTo(RespDocHelper.JsonHeaderItems[0].propertyName));

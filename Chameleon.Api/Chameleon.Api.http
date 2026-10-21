@@ -2,7 +2,6 @@
 
 POST {{Chameleon.Api_HostAddress}}/request/jsonparser?project=AutoTestProjectJson
 Content-Type: application/json
-Accept: application/json
 
 {
     "FirstName": "CrazyBat",
@@ -51,7 +50,6 @@ Accept: application/json
 
 POST {{Chameleon.Api_HostAddress}}/request/xmlparser?project=AutoTestProjectXml
 Content-Type: application/xml
-Accept: application/xml
 
 <?xml version="1.0" encoding="UTF-8"?>
  <bookstore>

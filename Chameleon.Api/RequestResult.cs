@@ -1,29 +1,23 @@
 ﻿using Chameleon.CommonLib;
-using Microsoft.AspNetCore.WebUtilities;
+using System.Net;
 
 namespace Chameleon.Api
 {
-    public enum ReturnResultStatus { None, Result200, Result400, Result500 };
-
-
     /**********************/
     /**  REQUEST RESULT  **/
     /**********************/
 
     public class RequestResult
     {
-        private Boolean _success;
-        public Boolean Success => _success;
-        private Boolean _serverErr;
-        public Boolean ServerErr => _serverErr;
         private string _responseStr;
         public string ResponseStr => _responseStr;
         private HeaderItem[] _headerItems;
         public HeaderItem[] HeaderItems => _headerItems;
         private string _loggingError;
         public string LoggingError => _loggingError;
-        private ReturnResultStatus _resultStatus;
-        public ReturnResultStatus ResultStatus => _resultStatus;
+        private HttpStatusCode _resultStatus;
+        public HttpStatusCode ResultStatus => _resultStatus;
+        public static HeaderItem[] ContentPlainTextHeader => [new HeaderItem("Content-Type", "text/plain")];
 
 
         /*****************/
@@ -32,12 +26,10 @@ namespace Chameleon.Api
 
         public RequestResult()
         {
-            _success = false;
-            _serverErr = false;
             _responseStr = string.Empty;
             _headerItems = [];
             _loggingError = string.Empty;
-            _resultStatus = ReturnResultStatus.None;
+            _resultStatus = HttpStatusCode.Unused;
         }
 
 
@@ -47,7 +39,6 @@ namespace Chameleon.Api
 
         public void SetAsServerErr(string responseStr, HeaderItem[] headerItems, string loggingErr = "")
         {
-            _serverErr = true;
             _responseStr = responseStr;
 
             if (string.IsNullOrWhiteSpace(loggingErr))
@@ -60,7 +51,7 @@ namespace Chameleon.Api
             }
 
             _headerItems = headerItems;
-            _resultStatus = ReturnResultStatus.Result500;
+            _resultStatus = HttpStatusCode.InternalServerError;
         }
 
 
@@ -82,22 +73,26 @@ namespace Chameleon.Api
 
         public void SetAsSuccess(string responseStr, HeaderItem[] headerItems)
         {
-            _success = true;
             _responseStr = responseStr;
             _headerItems = headerItems;
-            _resultStatus = ReturnResultStatus.Result200;
+            _resultStatus = HttpStatusCode.OK;
         }
 
 
-        /*********************/
-        /*  SetAsBadRequest  */
-        /*********************/
+        /*******************/
+        /*  SetAsNotFound  */
+        /*******************/
 
-        public void SetAsBadRequest(string responseStr, HeaderItem[] headerItems)
+        public void SetAsNotFound(string responseStr, HeaderItem[] headerItems)
         {
             _responseStr = responseStr;
             _headerItems = headerItems;
-            _resultStatus = ReturnResultStatus.Result400;
+            _resultStatus = HttpStatusCode.NotFound;
+        }
+
+        public void SetAsNotInitErr()
+        {
+            SetAsServerErr("RequestResult was not set to a result", ContentPlainTextHeader);
         }
 
 

@@ -1,5 +1,6 @@
 using Chameleon.CommonApiLib;
 using Microsoft.AspNetCore.Mvc;
+using System.Net;
 
 namespace Chameleon.Api.Controllers;
 
@@ -36,27 +37,18 @@ public static class ResponseHelpers
 {
     public static IActionResult BuildFromResult(ControllerBase controller, RequestResult reqResult, ILogger logger)
     {
+        if (reqResult.ResultStatus == HttpStatusCode.Unused)
+        {
+            reqResult.SetAsNotInitErr();
+        }
+
         reqResult.HandleResponseHeaders(controller.Response.Headers);
 
-        switch(reqResult.ResultStatus)
+        if (!string.IsNullOrWhiteSpace(reqResult.LoggingError))
         {
-            case ReturnResultStatus.Result200:
-                return controller.Ok(reqResult.ResponseStr);
-
-            case ReturnResultStatus.Result400:
-                return controller.BadRequest(reqResult.ResponseStr);
-
-            case ReturnResultStatus.Result500:
-                if (!string.IsNullOrWhiteSpace(reqResult.LoggingError))
-                {
-                    logger.LogError(reqResult.LoggingError);
-                }
-                return controller.StatusCode(500, reqResult.ResponseStr);
-
-            default:
-                string err = $"{reqResult.ResultStatus} is not a supported ReturnResultStatus value";
-                logger.LogError(err);
-                return controller.StatusCode(500, err);
+            logger.LogError(reqResult.LoggingError);
         }
+
+        return controller.StatusCode((int)reqResult.ResultStatus, reqResult.ResponseStr);
     }
 }
